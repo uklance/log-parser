@@ -1,0 +1,22 @@
+apply plugin: 'java'
+apply plugin: 'eclipse'
+
+group 'com.test'
+version '1.0-SNAPSHOT'
+
+sourceCompatibility = 1.8
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	compile 'ch.qos.logback:logback-classic:1.1.7'
+	compile 'org.springframework:spring-jdbc:5.1.9.RELEASE'
+	compile 'com.fasterxml.jackson.core:jackson-core:2.9.4'
+	compile 'com.fasterxml.jackson.core:jackson-databind:2.9.4'
+	testCompile 'org.hsqldb:hsqldb:2.4.1'
+	testCompile 'junit:junit:4.12'
+	testCompile 'org.assertj:assertj-core:3.13.2'
+	testCompile 'org.mockito:mockito-all:1.10.19'
+}
