@@ -55,37 +55,41 @@ public class LogParser {
 	}
 	
 	private void processLogEntry(LogEntry logEntry) {
-		Optional<Event> optional = eventRepository.findOneById(logEntry.getId());
-		Event event;
-		if (optional.isPresent()) {
-			event = optional.get();
-		} else {
-			event = new Event();
-			event.setId(logEntry.getId());
-		}
-		if (logEntry.getState() == State.STARTED) {
-			event.setStartTime(logEntry.getTimestamp());
-		} else if (logEntry.getState() == State.FINISHED) {
-			event.setFinishTime(logEntry.getTimestamp());
-		}
-		if (logEntry.getHost() != null) {
-			event.setHost(logEntry.getHost());
-		}
-		if (logEntry.getType() != null) {
-			event.setType(logEntry.getType());
-		}
-		if (event.getStartTime() != null && event.getFinishTime() != null) {
-			event.setDuration(event.getFinishTime() - event.getStartTime());
-			if (event.getDuration() > DURATION_ALERT_THRESHOLD_MILLIS) {
-				event.setAlert(true);
+		try {
+			Optional<Event> optional = eventRepository.findOneById(logEntry.getId());
+			Event event;
+			if (optional.isPresent()) {
+				event = optional.get();
+			} else {
+				event = new Event();
+				event.setId(logEntry.getId());
 			}
-		}
-		if (optional.isPresent()) {
-			logger.debug("update " + event);
-			eventRepository.update(event);
-		} else {
-			logger.debug("insert " + event);
-			eventRepository.insert(event);
+			if (logEntry.getState() == State.STARTED) {
+				event.setStartTime(logEntry.getTimestamp());
+			} else if (logEntry.getState() == State.FINISHED) {
+				event.setFinishTime(logEntry.getTimestamp());
+			}
+			if (logEntry.getHost() != null) {
+				event.setHost(logEntry.getHost());
+			}
+			if (logEntry.getType() != null) {
+				event.setType(logEntry.getType());
+			}
+			if (event.getStartTime() != null && event.getFinishTime() != null) {
+				event.setDuration(event.getFinishTime() - event.getStartTime());
+				if (event.getDuration() > DURATION_ALERT_THRESHOLD_MILLIS) {
+					event.setAlert(true);
+				}
+			}
+			if (optional.isPresent()) {
+				logger.debug("update " + event);
+				eventRepository.update(event);
+			} else {
+				logger.debug("insert " + event);
+				eventRepository.insert(event);
+			}
+		} catch (Throwable t) {
+			logger.error("Error processing " + logEntry, t);
 		}
 	}
 }
