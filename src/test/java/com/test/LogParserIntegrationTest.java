@@ -11,7 +11,7 @@ import org.junit.Test;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.SimpleDriverDataSource;
 
-public class LogParserTest {
+public class LogParserIntegrationTest {
 	private LogParser logParser;
 
 	@Before
@@ -33,7 +33,7 @@ public class LogParserTest {
 				"PRIMARY KEY (id)" +
 				")");
 		
-		EventRepository eventRepository = new EventRepository(jdbcTemplate);
+		EventRepository eventRepository = new EventRepositoryImpl(jdbcTemplate);
 		int threadCount = 10;
 		logParser = new LogParser(eventRepository, threadCount);
 	}
