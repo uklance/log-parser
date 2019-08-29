@@ -1,51 +1,39 @@
 package com.test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.when;
 
 import java.io.InputStream;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.runners.MockitoJUnitRunner;
 
-@RunWith(MockitoJUnitRunner.class)
 public class LogParserUnitTest {
-	@Mock
-	private EventRepository eventRepository;
-	
+	private MockEventRepository eventRepository;;
 	private LogParser logParser;
-	
-	private Map<String, Event> eventMap;
 
 	@Before
 	public void before() {
-		eventMap = new ConcurrentHashMap<String, Event>();
 		int threadCount = 10;
+		eventRepository = new MockEventRepository(); 
 		logParser = new LogParser(eventRepository, threadCount);
-		
-		when(eventRepository.findOneById(any())).thenAnswer(this::findOneById);
-		doAnswer(this::save).when(eventRepository).insert(any());
-		doAnswer(this::save).when(eventRepository).update(any());
 	}
 	
 	@Test
 	public void testEnqueue() throws Exception {
 		logParser.enqueue(getResource("sample-log-small.json"));
-		logParser.awaitTermination(1, TimeUnit.SECONDS);
+		logParser.shutdownAndAwaitTermination(1, TimeUnit.SECONDS);
 		
-		assertThat(eventMap).containsOnlyKeys("scsmbstgra", "scsmbstgrb", "scsmbstgrc");
-		Event scsmbstgrc = eventMap.get("scsmbstgrc");
-		Event scsmbstgrb = eventMap.get("scsmbstgrb");
+		assertThat(eventRepository.getIds()).containsOnly("scsmbstgra", "scsmbstgrb", "scsmbstgrc");
+		Event scsmbstgra = eventRepository.findOneById("scsmbstgra").get();
+		Event scsmbstgrb = eventRepository.findOneById("scsmbstgrb").get();
+		Event scsmbstgrc = eventRepository.findOneById("scsmbstgrc").get();
+		assertThat(scsmbstgra.getHost()).isEqualTo("12345");
+		assertThat(scsmbstgra.getType()).isEqualTo("APPLICATION_LOG");
 		assertThat(scsmbstgrc.getDuration()).isEqualTo(8L);
 		assertThat(scsmbstgrc.isAlert()).isTrue();
 		assertThat(scsmbstgrb.getDuration()).isEqualTo(3L);
@@ -58,13 +46,31 @@ public class LogParserUnitTest {
 		return in;
 	}
 	
-	protected Optional<Event> findOneById(InvocationOnMock invocation) {
-		String id = invocation.getArgumentAt(0, String.class);
-		return eventMap.containsKey(id) ? Optional.of(eventMap.get(id)) : Optional.empty();
-	}
-	protected Void save(InvocationOnMock invocation) {
-		Event event = invocation.getArgumentAt(0, Event.class);
-		eventMap.put(event.getId(), event);
-		return null;
+	protected static class MockEventRepository implements EventRepository {
+		private final Map<String, Event> eventMap = new ConcurrentHashMap<String, Event>();
+
+		@Override
+		public Optional<Event> findOneById(String id) {
+			Event event = eventMap.get(id);
+			return event == null ? Optional.empty() : Optional.of(event);
+		}
+
+		@Override
+		public void insert(Event event) {
+			cloneAndPut(event);
+		}
+
+		@Override
+		public void update(Event event) {
+			cloneAndPut(event);
+		}
+		
+		public Set<String> getIds() {
+			return eventMap.keySet();
+		}
+		
+		protected void cloneAndPut(Event event) {
+			eventMap.put(event.getId(), (Event) event.clone());
+		}
 	}
 }

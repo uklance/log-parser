@@ -1,6 +1,6 @@
 package com.test;
 
-public class Event {
+public class Event implements Cloneable {
 	private String id;
 	private Long startTime;
 	private Long finishTime;
@@ -49,6 +49,14 @@ public class Event {
 	}
 	public void setAlert(boolean alert) {
 		this.alert = alert;
+	}
+	@Override
+	public Object clone() {
+		try {
+			return super.clone();
+		} catch (CloneNotSupportedException e) {
+			throw new RuntimeException(e);
+		}
 	}
 	@Override
 	public String toString() {

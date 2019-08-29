@@ -45,7 +45,10 @@ public class LogParser {
 		}
 	}
 	
-	public void awaitTermination(long timeout, TimeUnit timeUnit) throws InterruptedException {
+	public void shutdownAndAwaitTermination(long timeout, TimeUnit timeUnit) throws InterruptedException {
+		for (ExecutorService executor : executors) {
+			executor.shutdown();
+		}
 		for (ExecutorService executor : executors) {
 			executor.awaitTermination(timeout, timeUnit);
 		}
