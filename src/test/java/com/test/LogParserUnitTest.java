@@ -41,7 +41,7 @@ public class LogParserUnitTest {
 	@Test
 	public void testEnqueue() throws Exception {
 		logParser.enqueue(getResource("sample-log-small.json"));
-		logParser.awaitTermination(10, TimeUnit.MILLISECONDS);
+		logParser.awaitTermination(1, TimeUnit.SECONDS);
 		
 		assertThat(eventMap).containsOnlyKeys("scsmbstgra", "scsmbstgrb", "scsmbstgrc");
 		Event scsmbstgrc = eventMap.get("scsmbstgrc");
